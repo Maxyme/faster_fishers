@@ -1,0 +1,19 @@
+[package]
+name = "faster-fisher"
+version = "0.1.0"
+authors = ["Maxime Jacques <maxjacques@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "faster_fishers"
+crate-type = ["cdylib"]
+
+[dependencies]
+numpy = "0.13.1"
+ndarray = "0.14.0"  # Note this must match the version used by numpy above ^
+fishers_exact = "1.0.1"
+rayon = "1.5.0"
+
+[dependencies.pyo3]
+version = "0.13.2"
+features = ["extension-module"]
