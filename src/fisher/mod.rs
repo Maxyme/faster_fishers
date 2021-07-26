@@ -3,16 +3,12 @@
 
 // Based on fishers_exact: https://docs.rs/fishers_exact/1.0.1/src/fishers_exact/lib.rs.html#8-426
 
-use std::{fmt, cmp};
-use std::error::Error;
-
-fn lngamm(z: usize) -> f64
+fn lngamm(z: f64) -> f64
 // Reference: "Lanczos, C. 'A precision approximation
 // of the gamma function', J. SIAM Numer. Anal., B, 1, 86-96, 1964."
 // Translation of  Alan Miller's FORTRAN-implementation
 // See http://lib.stat.cmu.edu/apstat/245
 {
-    let z = z as f64;
     let mut x = 0.0;
     x += 0.1659470187408462e-06 / (z + 7.0);
     x += 0.9934937113930748e-05 / (z + 6.0);
@@ -30,7 +26,7 @@ fn lnfact(n: usize) -> f64 {
     if n <= 1 {
         return 0.0;
     }
-    lngamm(n + 1)
+    lngamm((n + 1) as f64)
 }
 
 fn lnbico(n: usize, k: usize) -> f64 {
@@ -91,8 +87,7 @@ fn hyper0(s: &mut HyperState, n11i: usize, n1_i: usize, n_1i: usize, ni: usize) 
         s.n = ni;
         s.valid = true
     }
-    s.prob = hyper_323(s.n11, s.n1_, s.n_1, s.n);
-    return s.prob;
+    return hyper_323(s.n11, s.n1_, s.n_1, s.n);
 }
 
 // Returns prob,sleft,sright,sless,slarg
@@ -150,7 +145,7 @@ fn exact(n11: usize, n1_: usize, n_1: usize, n: usize) -> (f64, f64, f64, f64, f
     } else {
         j += 1;
     }
-    if (i  as isize - n11  as isize).abs() < (j  as isize - n11 as isize).abs() {
+    if (i as isize - n11 as isize).abs() < (j as isize - n11 as isize).abs() {
         sless = s_left;
         slarg = 1.0 - s_left + prob;
     } else {
@@ -207,39 +202,51 @@ pub enum Alternative {
 /// ```
 ///
 pub fn fishers_exact(table: &[usize; 4], alternative: Alternative) -> f64 {
-    // if 0 in c.sum(axis=0) or 0 in c.sum(axis=1):
-    // # If both values in a row or column are zero, the p-value is 1 and
-    // # the odds ratio is NaN.
-    // return np.nan, 1.0
 
+    // If both values in a row or column are zero, the p-value is 1 and
+    // the odds ratio is NaN.
     if (table[0] == 0 && table[2] == 0) || (table[1] == 0 && table[3] == 0) {
-        return 1.0;
+        //return (f64::NAN, 1.0);
+        return 1.0
     }
 
-    let (left, right, mut twotail);
-    let (n11, n12, n21, n22) = (table[0], table[1], table[2], table[3]);
-    let n1_ = n11 + n12;
-    let n_1 = n11 + n21;
-    let n = n11 + n12 + n21 + n22;
-    let (_, sleft, sright, sless, slarg) = exact(n11, n1_, n_1, n);
-    left = sless;
-    right = slarg;
-    twotail = sleft + sright;
-    if twotail > 1.0 {
-        twotail = 1.0;
-    }
+    let odds_ratio = {
+        if table[1] > 0 && table[2] > 0 {
+            (table[0] * table[3]) as f64 / (table[1] * table[2]) as f64
+        } else {
+            f64::INFINITY
+        }
+    };
 
-     let values = FishersExactPvalues {
-        two_tail_pvalue: twotail,
+    //let (n11, n12, n21, n22) = (table[0], table[1], table[2], table[3]);
+    let n1_ = table[0] + table[1];
+    let n_1 = table[0] + table[2];
+    let sum = table.iter().sum(); //[0] + table[1] + table[2] +  table[3];
+    let (_, sleft, sright, left, right) = exact(table[0], n1_, n_1, sum);
+
+    let two_tail = {
+        if (sleft + sright) < 1.0 {
+            sleft + sright
+        } else {
+            1.0
+        }
+    };
+
+
+    let values = FishersExactPvalues {
+        two_tail_pvalue: two_tail,
         less_pvalue: left,
         greater_pvalue: right,
     };
-    //values
-    match alternative {
-        Alternative::TwoSided => values.two_tail_pvalue,
-        Alternative::Less => values.less_pvalue,
-        Alternative::Greater => values.greater_pvalue,
-    }
+
+    let value = {
+        match alternative {
+            Alternative::TwoSided => values.two_tail_pvalue,
+            Alternative::Less => values.less_pvalue,
+            Alternative::Greater => values.greater_pvalue
+        }
+    };
+    value
 }
 
 #[cfg(test)]
@@ -357,7 +364,7 @@ mod tests {
             (
                 [111, 195, 189, 69],
                 Alternative::Greater,
-               // 6.665245982898848e-19,
+                // 6.665245982898848e-19,
                 0.9999999999994574,
                 //1.0735744915712542e-18,
             ),
