@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Maxime Jacques <maxjacques@gmail.com>"]
 edition = "2018"
 license = "MIT"
+description = "Rustified version of scipy's Fisher exact test."
 
 [lib]
 name = "faster_fishers"
