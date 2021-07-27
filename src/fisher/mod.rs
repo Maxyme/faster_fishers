@@ -1,8 +1,7 @@
 // Perform a Fisher exact test on a 2x2 contingency table.
 // Based on scipy's fisher test: https://github.com/scipy/scipy/blob/v1.7.0/scipy/stats/stats.py#L40757
 
-use statrs::distribution::DiscreteCDF;
-use statrs::distribution::{Discrete, Hypergeometric};
+use statrs::distribution::{Discrete, DiscreteCDF, Hypergeometric};
 
 fn binary_search(
     n: u64,
