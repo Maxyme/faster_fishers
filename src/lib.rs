@@ -8,7 +8,7 @@ use pyo3::prelude::{pyfunction, pymodule, PyModule, PyResult, Python};
 
 use pyo3::wrap_pyfunction;
 
-use ndarray::{Array1, ArrayView1, Array2, Array};
+use ndarray::{Array, Array1, Array2, ArrayView1};
 
 use rayon::iter::IntoParallelIterator;
 
@@ -81,8 +81,8 @@ fn exact(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use float_cmp::assert_approx_eq;
     use ndarray::arr1;
-
     #[test]
     fn test_exact() {
         // Test the exact method
@@ -98,7 +98,8 @@ mod tests {
             Alternative::Less,
         );
 
-        assert_eq!(lesses, arr1(&[0.9166666666666647, 0.9963034765672586]));
+        assert_approx_eq!(f64, lesses[0], 0.9166666666666659, epsilon = 1e-12);
+        assert_approx_eq!(f64, lesses[1], 0.9963034765672599, epsilon = 1e-12);
 
         let greaters = exact(
             a_values.view(),
@@ -107,7 +108,8 @@ mod tests {
             d_values.view(),
             Alternative::Greater,
         );
-        assert_eq!(greaters, arr1(&[0.5833333333333326, 0.03970749246529451]));
+        assert_approx_eq!(f64, greaters[0], 0.5833333333333328, epsilon = 1e-12);
+        assert_approx_eq!(f64, greaters[1], 0.03970749246529277, epsilon = 1e-12);
 
         let two_tails = exact(
             a_values.view(),
@@ -116,6 +118,7 @@ mod tests {
             d_values.view(),
             Alternative::TwoSided,
         );
-        assert_eq!(two_tails, arr1(&[1.0, 0.03970749246529451]));
+        assert_approx_eq!(f64, two_tails[0], 1.0, epsilon = 1e-12);
+        assert_approx_eq!(f64, two_tails[1], 0.03970749246529276, epsilon = 1e-12);
     }
 }
