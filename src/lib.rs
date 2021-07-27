@@ -3,12 +3,12 @@
 
 mod fisher;
 
-use numpy::{PyReadonlyArray1, PyReadonlyArray2, ToPyArray};
+use numpy::{PyReadonlyArray1, ToPyArray};
 use pyo3::prelude::{pyfunction, pymodule, PyModule, PyResult, Python};
 
 use pyo3::wrap_pyfunction;
 
-use ndarray::{Array, Array1, Array2, ArrayView1};
+use ndarray::{Array1, ArrayView1};
 
 use rayon::iter::IntoParallelIterator;
 

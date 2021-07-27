@@ -3,7 +3,6 @@
 
 use statrs::distribution::DiscreteCDF;
 use statrs::distribution::{Discrete, Hypergeometric};
-use std::cmp::{max, min};
 
 fn binary_search(
     n: usize,
@@ -126,13 +125,13 @@ pub fn fishers_exact(table: &[usize; 4], alternative: Alternative) -> f64 {
         return 1.0;
     }
 
-    let odds_ratio = {
-        if table[1] > 0 && table[2] > 0 {
-            (table[0] * table[3]) as f64 / (table[1] * table[2]) as f64
-        } else {
-            f64::INFINITY
-        }
-    };
+    // let odds_ratio = {
+    //     if table[1] > 0 && table[2] > 0 {
+    //         (table[0] * table[3]) as f64 / (table[1] * table[2]) as f64
+    //     } else {
+    //         f64::INFINITY
+    //     }
+    // };
 
     let n1 = table[0] + table[1];
     let n2 = table[2] + table[3];
@@ -320,7 +319,7 @@ mod tests {
             ),
         ];
 
-        for &(table, less_expected, greater_expected, two_sided_expected) in cases.iter() {
+        for (table, less_expected, greater_expected, two_sided_expected) in cases.iter() {
             for (alternative, expected) in [
                 Alternative::Less,
                 Alternative::Greater,
@@ -330,7 +329,7 @@ mod tests {
             .zip(vec![less_expected, greater_expected, two_sided_expected])
             {
                 let p_value = fishers_exact(&table, *alternative);
-                assert_approx_eq!(f64, p_value, expected, epsilon = 1e-12);
+                assert_approx_eq!(f64, p_value, *expected, epsilon = 1e-12);
             }
         }
     }
