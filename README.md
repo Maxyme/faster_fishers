@@ -25,3 +25,8 @@ array([1.0, 0.03970749246529451])
 * Add environment to current shell `poetry shell`  
 * Install faster_fishers in current environment: `maturin develop`  
 * Check that it works: `python -c "import faster_fishers; print(dir(faster_fishers))"`  
+
+To try the library in a different environment:  
+    1. `maturin build --release`  
+    2. `cd folder`  
+    3. `pip install {wheel_path}.whl`  

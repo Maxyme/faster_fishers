@@ -5,14 +5,14 @@ use statrs::distribution::DiscreteCDF;
 use statrs::distribution::{Discrete, Hypergeometric};
 
 fn binary_search(
-    n: usize,
-    n1: usize,
-    n2: usize,
-    mode: usize,
+    n: u64,
+    n1: u64,
+    n2: u64,
+    mode: u64,
     p_exact: f64,
     epsilon: f64,
     upper: bool,
-) -> usize {
+) -> u64 {
     // Binary search in two-sided test with starting bound as argument
     let (mut min_val, mut max_val) = {
         if upper {
@@ -25,9 +25,9 @@ fn binary_search(
     let population = n1 + n2;
     let successes = n1;
     let draws = n;
-    let dist = Hypergeometric::new(population as u64, successes as u64, draws as u64).unwrap();
+    let dist = Hypergeometric::new(population, successes, draws).unwrap();
 
-    let mut guess: usize = 0; // = -1;
+    let mut guess = 0;
     loop {
         if (max_val - min_val) <= 1 {
             break;
@@ -36,12 +36,9 @@ fn binary_search(
             if max_val == min_val + 1 && guess == min_val {
                 max_val
             } else {
-                //(maxval + minval) // 2
                 (max_val + min_val) / 2
             }
         };
-
-        let p_guess = dist.pmf(guess as u64);
 
         let ng = {
             if upper {
@@ -50,10 +47,13 @@ fn binary_search(
                 guess + 1
             }
         };
-        let pmf_comp = dist.pmf(ng as u64);
+
+        let pmf_comp = dist.pmf(ng);
+        let p_guess = dist.pmf(guess);
         if p_guess <= p_exact && p_exact < pmf_comp {
             break;
-        } else if p_guess < p_exact {
+        }
+        if p_guess < p_exact {
             max_val = guess
         } else {
             min_val = guess
@@ -61,7 +61,6 @@ fn binary_search(
     }
 
     if guess == 0 {
-        //-1 {
         guess = min_val
     }
     if upper {
@@ -98,14 +97,6 @@ fn binary_search(
     guess
 }
 
-// alternative : {'two-sided', 'less', 'greater'}, optional
-// Defines the alternative hypothesis.
-// The following options are available (default is 'two-sided'):
-// * 'two-sided'
-// * 'less': one-sided
-// * 'greater': one-sided
-// See the Notes for more details.
-// Describe the destination type of a key attribute
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
 pub enum Alternative {
     TwoSided,
@@ -115,23 +106,31 @@ pub enum Alternative {
 
 const EPSILON: f64 = 1.0 - 1e-4;
 
-pub fn fishers_exact(table: &[usize; 4], alternative: Alternative) -> f64 {
-    // Fisher p_value like scipy
+pub fn fishers_exact_with_odds_ratio(table: &[u64; 4], alternative: Alternative) -> (f64, f64) {
+    // Calculate fisher's exact test with the odds ratio
+    if (table[0] == 0 && table[2] == 0) || (table[1] == 0 && table[3] == 0) {
+        return (f64::NAN, 1.0);
+    }
+    let odds_ratio = {
+        if table[1] > 0 && table[2] > 0 {
+            (table[0] * table[3]) as f64 / (table[1] * table[2]) as f64
+        } else {
+            f64::INFINITY
+        }
+    };
+
+    let p_value = fishers_exact(table, alternative);
+    (odds_ratio, p_value)
+}
+
+pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> f64 {
+    // Rewrite of the scipy's Fisher exact test
 
     // If both values in a row or column are zero, the p-value is 1 and
     // the odds ratio is NaN.
     if (table[0] == 0 && table[2] == 0) || (table[1] == 0 && table[3] == 0) {
-        //return (f64::NAN, 1.0);
         return 1.0;
     }
-
-    // let odds_ratio = {
-    //     if table[1] > 0 && table[2] > 0 {
-    //         (table[0] * table[3]) as f64 / (table[1] * table[2]) as f64
-    //     } else {
-    //         f64::INFINITY
-    //     }
-    // };
 
     let n1 = table[0] + table[1];
     let n2 = table[2] + table[3];
@@ -142,14 +141,26 @@ pub fn fishers_exact(table: &[usize; 4], alternative: Alternative) -> f64 {
         let successes = n1;
 
         match alternative {
+            Alternative::Less => {
+                let draws = n;
+                let dist =
+                    Hypergeometric::new(population as u64, successes as u64, draws as u64).unwrap();
+                dist.cdf(table[0] as u64)
+            }
+            Alternative::Greater => {
+                let draws = table[1] + table[3];
+                let dist =
+                    Hypergeometric::new(population as u64, successes as u64, draws as u64).unwrap();
+                dist.cdf(table[1] as u64)
+            }
             Alternative::TwoSided => {
                 let draw = n;
                 let dist =
                     Hypergeometric::new(population as u64, successes as u64, draw as u64).unwrap();
                 let p_exact = dist.pmf(table[0] as u64);
 
-                let mode = (((n + 1) * (n1 + 1)) as f64 / (n1 + n2 + 2) as f64) as usize; // todo: check floor?
-                let p_mode = dist.pmf(mode as u64);
+                let mode = (((n + 1) * (n1 + 1)) as f64 / (n1 + n2 + 2) as f64) as u64; // todo: check floor?
+                let p_mode = dist.pmf(mode);
 
                 if (p_exact - p_mode).abs() / p_exact.max(p_mode) <= 1.0 - EPSILON {
                     return 1.0;
@@ -175,18 +186,6 @@ pub fn fishers_exact(table: &[usize; 4], alternative: Alternative) -> f64 {
                     };
                     return p_value;
                 }
-            }
-            Alternative::Less => {
-                let draw = n;
-                let dist =
-                    Hypergeometric::new(population as u64, successes as u64, draw as u64).unwrap();
-                dist.cdf(table[0] as u64)
-            }
-            Alternative::Greater => {
-                let draw = table[1] + table[3];
-                let dist =
-                    Hypergeometric::new(population as u64, successes as u64, draw as u64).unwrap();
-                dist.cdf(table[1] as u64)
             }
         }
     };
