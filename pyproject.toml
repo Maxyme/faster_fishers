@@ -6,7 +6,7 @@ requires = ["maturin>=0.10,<0.11"]
 name = "faster-fisher"
 version = "0.1.0"
 description = "Fast implementation of Fisher's exact test in Rust for Python."
-authors = ["Maxime Jacques <maxjacques@gmail.com>"]
+authors = ["Maxime Jacques <maxyme@outlook.com>"]
 
 [tool.poetry.dependencies]
 numpy = ">=1.18"
