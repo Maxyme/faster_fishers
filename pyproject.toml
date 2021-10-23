@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "maturin"
-requires = ["maturin>=0.10,<0.11"]
+requires = ["maturin>=0.11,<0.12"]
 
 [tool.poetry]
 name = "faster-fisher"
@@ -9,12 +9,13 @@ description = "Fast implementation of Fisher's exact test in Rust for Python."
 authors = ["Maxime Jacques <maxyme@outlook.com>"]
 
 [tool.poetry.dependencies]
-numpy = ">=1.18"
-python = ">=3.6"
+numpy = ">=1.21"
+python = ">=3.9"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.2"
 maturin = ">=0.11"
 
 [tool.maturin]
-manylinux = "on"
+bindings = "cffi"
+compatibility = "linux"
