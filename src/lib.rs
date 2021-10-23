@@ -1,4 +1,4 @@
-/* Rust version of the fisher_exact test for python originally written in cython */
+/* Rust version of the fisher_exact test in scipy */
 #![allow(unused_doc_comments)]
 
 mod fisher;
@@ -17,7 +17,7 @@ use cached::proc_macro::cached;
 use rayon::prelude::ParallelIterator;
 
 #[pymodule]
-fn faster_fishers(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn faster_fishers(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(exact, m)?)?;
     m.add_function(wrap_pyfunction!(exact_with_odds_ratios, m)?)?;
     Ok(())

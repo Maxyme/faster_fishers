@@ -1,7 +1,6 @@
 """Test methods for faster fishers"""
 import numpy as np
-from faster_fishers import exact
-from faster_fishers import exact_with_odds_ratios
+from faster_fishers import exact, exact_with_odds_ratios
 
 
 def test_exact():
