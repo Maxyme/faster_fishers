@@ -38,8 +38,7 @@ fn exact<'py>(
         "greater" => Alternative::Greater,
         "two-sided" => Alternative::TwoSided,
         _ => panic!(
-            "{}",
-            "Error: `alternative` should be one of {'two-sided', 'less', 'greater'}"
+            "Error: `alternative` should be one of ['two-sided', 'less', 'greater']"
         ),
     };
 
@@ -69,8 +68,7 @@ fn exact_with_odds_ratios<'py>(
         "greater" => Alternative::Greater,
         "two-sided" => Alternative::TwoSided,
         _ => panic!(
-            "{}",
-            "Error: `alternative` should be one of {'two-sided', 'less', 'greater'}"
+            "Error: `alternative` should be one of ['two-sided', 'less', 'greater']"
         ),
     };
 
@@ -88,7 +86,7 @@ fn exact_with_odds_ratios<'py>(
 #[cached]
 fn cached_fisher_exact(table: [u64; 4], alternative: Alternative) -> f64 {
     /// Cached version of the code
-    fishers_exact(&table, alternative)
+    fishers_exact(&table, alternative).expect("Input Error")
 }
 
 fn exact_test(
@@ -113,7 +111,7 @@ fn exact_test(
 #[cached]
 fn cached_fisher_exact_with_odds_ratios(table: [u64; 4], alternative: Alternative) -> (f64, f64) {
     /// Cached version of the code
-    fishers_exact_with_odds_ratio(&table, alternative)
+    fishers_exact_with_odds_ratio(&table, alternative).expect("Input Error")
 }
 
 fn exact_test_with_odds_ratio(
