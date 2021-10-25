@@ -28,7 +28,7 @@ fn binary_search(
 
     let mut guess = 0;
     loop {
-        if (max_val - min_val) <= 1 {
+        if max_val - min_val <= 1 {
             break;
         }
         guess = {
@@ -64,14 +64,14 @@ fn binary_search(
     }
     if upper {
         loop {
-            if guess > 0 && dist.pmf(guess as u64) < p_exact * epsilon {
+            if guess > 0 && dist.pmf(guess) < p_exact * epsilon {
                 guess -= 1;
             } else {
                 break;
             }
         }
         loop {
-            if dist.pmf(guess as u64) > p_exact / epsilon {
+            if dist.pmf(guess) > p_exact / epsilon {
                 guess += 1;
             } else {
                 break;
@@ -79,14 +79,14 @@ fn binary_search(
         }
     } else {
         loop {
-            if dist.pmf(guess as u64) < p_exact * epsilon {
+            if dist.pmf(guess) < p_exact * epsilon {
                 guess += 1;
             } else {
                 break;
             }
         }
         loop {
-            if guess > 0 && dist.pmf(guess as u64) > p_exact / epsilon {
+            if guess > 0 && dist.pmf(guess) > p_exact / epsilon {
                 guess -= 1;
             } else {
                 break;
@@ -108,6 +108,8 @@ const EPSILON: f64 = 1.0 - 1e-4;
 pub fn fishers_exact_with_odds_ratio(table: &[u64; 4], alternative: Alternative) -> (f64, f64) {
     // Calculate fisher's exact test with the odds ratio
     if (table[0] == 0 && table[2] == 0) || (table[1] == 0 && table[3] == 0) {
+        // If both values in a row or column are zero, the p-value is 1 and
+        // the odds ratio is NaN.
         return (f64::NAN, 1.0);
     }
     let odds_ratio = {
@@ -143,22 +145,22 @@ pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> f64 {
             Alternative::Less => {
                 let draws = n;
                 let dist =
-                    Hypergeometric::new(population as u64, successes as u64, draws as u64).unwrap();
-                dist.cdf(table[0] as u64)
+                    Hypergeometric::new(population, successes, draws).unwrap();
+                dist.cdf(table[0])
             }
             Alternative::Greater => {
                 let draws = table[1] + table[3];
                 let dist =
-                    Hypergeometric::new(population as u64, successes as u64, draws as u64).unwrap();
-                dist.cdf(table[1] as u64)
+                    Hypergeometric::new(population, successes, draws).unwrap();
+                dist.cdf(table[1])
             }
             Alternative::TwoSided => {
-                let draw = n;
+                let draws = n;
                 let dist =
-                    Hypergeometric::new(population as u64, successes as u64, draw as u64).unwrap();
-                let p_exact = dist.pmf(table[0] as u64);
+                    Hypergeometric::new(population, successes, draws).unwrap();
 
-                let mode = (((n + 1) * (n1 + 1)) as f64 / (n1 + n2 + 2) as f64) as u64; // todo: check floor?
+                let p_exact = dist.pmf(table[0]);
+                let mode = ((n + 1) * (n1 + 1)) / (n1 + n2 + 2) as u64; // todo: check floor?
                 let p_mode = dist.pmf(mode);
 
                 if (p_exact - p_mode).abs() / p_exact.max(p_mode) <= 1.0 - EPSILON {
@@ -166,25 +168,22 @@ pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> f64 {
                 }
 
                 if table[0] < mode {
-                    let p_lower = dist.cdf(table[0] as u64);
-                    if dist.pmf(n as u64) > p_exact / EPSILON {
+                    let p_lower = dist.cdf(table[0]);
+                    if dist.pmf(n) > p_exact / EPSILON {
                         return p_lower;
                     }
                     let guess = binary_search(n, n1, n2, mode, p_exact, EPSILON, true);
-                    let p_value = p_lower + (1.0 - dist.cdf((guess - 1) as u64));
-                    return p_value;
-                } else {
-                    let p_upper = 1.0 - dist.cdf((table[0] - 1) as u64);
-                    let p_value = {
-                        if dist.pmf(0) > p_exact / EPSILON {
-                            p_upper
-                        } else {
-                            let guess = binary_search(n, n1, n2, mode, p_exact, EPSILON, false);
-                            p_upper + dist.cdf(guess as u64)
-                        }
-                    };
-                    return p_value;
+                    return p_lower + 1.0 - dist.cdf(guess - 1);
+
                 }
+
+                let p_upper = 1.0 - dist.cdf(table[0] - 1);
+                if dist.pmf(0) > p_exact / EPSILON {
+                    return p_upper;
+                }
+
+                let guess = binary_search(n, n1, n2, mode, p_exact, EPSILON, false);
+                p_upper + dist.cdf(guess)
             }
         }
     };
