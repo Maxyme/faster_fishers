@@ -10,11 +10,7 @@ use pyo3::wrap_pyfunction;
 
 use ndarray::{Array1, Array2, ArrayView1};
 
-use rayon::iter::IntoParallelIterator;
-
 use crate::fisher::{fishers_exact, fishers_exact_with_odds_ratio, Alternative};
-use cached::proc_macro::cached;
-use rayon::prelude::ParallelIterator;
 
 #[pymodule]
 fn faster_fishers(_py: Python, m: &PyModule) -> PyResult<()> {
@@ -30,10 +26,10 @@ fn exact<'py>(
     b_values: PyReadonlyArray1<'py, u64>,
     c_values: PyReadonlyArray1<'py, u64>,
     d_values: PyReadonlyArray1<'py, u64>,
-    alternative: String,
+    alternative: &str,
 ) -> PyResult<PyReadonlyArray1<'py, f64>> {
     /// Entrypoint for the Python method to convert from numpy arrays
-    let alternative_enum = match alternative.as_str() {
+    let alternative_enum = match alternative {
         "less" => Alternative::Less,
         "greater" => Alternative::Greater,
         "two-sided" => Alternative::TwoSided,
@@ -60,10 +56,10 @@ fn exact_with_odds_ratios<'py>(
     b_values: PyReadonlyArray1<'py, u64>,
     c_values: PyReadonlyArray1<'py, u64>,
     d_values: PyReadonlyArray1<'py, u64>,
-    alternative: String,
+    alternative: &str,
 ) -> PyResult<PyReadonlyArray2<'py, f64>> {
     /// Entrypoint for the Python method to convert from numpy arrays
-    let alternative_enum = match alternative.as_str() {
+    let alternative_enum = match alternative {
         "less" => Alternative::Less,
         "greater" => Alternative::Greater,
         "two-sided" => Alternative::TwoSided,
@@ -83,12 +79,6 @@ fn exact_with_odds_ratios<'py>(
     Ok(PyReadonlyArray2::from(return_value.to_pyarray(py)))
 }
 
-#[cached]
-fn cached_fisher_exact(table: [u64; 4], alternative: Alternative) -> f64 {
-    /// Cached version of the code
-    fishers_exact(&table, alternative).expect("Input Error")
-}
-
 fn exact_test(
     a: ArrayView1<u64>,
     b: ArrayView1<u64>,
@@ -100,18 +90,12 @@ fn exact_test(
     /// Note, perhaps this should be a 2d array instead.
     let range = 0..a.dim();
 
-    let return_values: Vec<f64> = range
-        .into_par_iter()
-        .map(|index| cached_fisher_exact([a[index], b[index], c[index], d[index]], alternative))
-        .collect();
+    // todo, can we use a par_iter here?
+    let p_values= range
+        .into_iter()
+        .map(|index| fishers_exact(&[a[index], b[index], c[index], d[index]], alternative).expect("Statrs error with the given input."));
 
-    Array1::from(return_values)
-}
-
-#[cached]
-fn cached_fisher_exact_with_odds_ratios(table: [u64; 4], alternative: Alternative) -> (f64, f64) {
-    /// Cached version of the code
-    fishers_exact_with_odds_ratio(&table, alternative).expect("Input Error")
+    Array1::from_iter(p_values)
 }
 
 fn exact_test_with_odds_ratio(
@@ -125,22 +109,40 @@ fn exact_test_with_odds_ratio(
     /// Note, perhaps this should be a 2d array instead.
     let range = 0..a.dim();
 
-    let return_values: Vec<(f64, f64)> = range
-        .into_par_iter()
+    let odds_p_values = range
+        .into_iter()
         .map(|index| {
-            cached_fisher_exact_with_odds_ratios(
-                [a[index], b[index], c[index], d[index]],
+            fishers_exact_with_odds_ratio(
+                &[a[index], b[index], c[index], d[index]],
                 alternative,
-            )
-        })
-        .collect();
+            ).expect("Statrs error with the given input.")
+        });
+        //.collect();
 
-    let mut arr = Array2::<f64>::default((2, return_values.len()));
-    for (index, (odds_ratio, p_value)) in return_values.iter().enumerate() {
-        arr[[0, index]] = *odds_ratio;
-        arr[[1, index]] = *p_value;
+    //Convert into an array of odds_ratios and p_values
+    let mut arr = Array2::<f64>::default((2, odds_p_values.len()));
+    //let x = Array2::<f64>::from_iter()
+    for (index, (odds_ratio, p_value)) in odds_p_values.enumerate() {
+        arr[[0, index]] = odds_ratio;
+        arr[[1, index]] = p_value;
     }
+
     arr
+
+    // let arr2 = odds_p_values.iter().map(|x, y | ).collect::Array2::<f64>();
+    // arr
+    //
+    // let odds_p_values: Array2<f64> = range
+    //     .into_par_iter()
+    //     .map(|index| {
+    //         cached_fisher_exact_with_odds_ratios(
+    //             [a[index], b[index], c[index], d[index]],
+    //             alternative,
+    //         )
+    //     })
+    //     .collect();
+    //
+    // odds_p_values
 }
 
 #[cfg(test)]

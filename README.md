@@ -30,3 +30,7 @@ To try the library in a different environment:
     1. `maturin build --release`  
     2. `cd folder`  
     3. `pip install {wheel_path}.whl`  
+
+
+### Benchmarks
+*python: `pytest --benchmark-warmup -m benchmark`
