@@ -33,4 +33,5 @@ To try the library in a different environment:
 
 
 ### Benchmarks
+* Make sure to compile in release mode with maturin first: `maturin develop --release`
 *python: `pytest --benchmark-warmup -m benchmark`

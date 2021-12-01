@@ -11,7 +11,7 @@ name = "faster_fishers"
 crate-type = ["cdylib"]
 
 [dependencies]
-numpy = "0.14.1"
+numpy = "0.15.0"
 ndarray = { version = "0.15.3", features = ["rayon"] }
 statrs = "0.15.0"
 
@@ -20,5 +20,5 @@ float-cmp = "0.9.0"
 criterion = "0.3.5"
 
 [dependencies.pyo3]
-version = "0.14.5"
+version = "0.15.0"
 features = ["extension-module"]
