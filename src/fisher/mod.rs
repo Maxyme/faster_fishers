@@ -358,7 +358,7 @@ mod tests {
         let table = [3, 5, 4, 50];
         let (odds_ratio, p_value) =
             fishers_exact_with_odds_ratio(&table, Alternative::Less).unwrap();
-        assert_approx_eq!(f64, p_value, 0.9963034765672599, 1e-12);
-        assert_approx_eq!(f64, odds_ratio, 7.5, 1e-1);
+        assert_approx_eq!(f64, p_value, 0.9963034765672599, epsilon = 1e-12);
+        assert_approx_eq!(f64, odds_ratio, 7.5, epsilon = 1e-1);
     }
 }
