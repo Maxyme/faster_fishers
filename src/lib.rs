@@ -1,4 +1,3 @@
-/* Rust version of the fisher_exact test in scipy */
 #![allow(unused_doc_comments)]
 
 mod fisher;
@@ -33,9 +32,7 @@ fn exact<'py>(
         "less" => Alternative::Less,
         "greater" => Alternative::Greater,
         "two-sided" => Alternative::TwoSided,
-        _ => panic!(
-            "Error: `alternative` should be one of ['two-sided', 'less', 'greater']"
-        ),
+        _ => panic!("Error: `alternative` should be one of ['two-sided', 'less', 'greater']"),
     };
 
     let return_value = exact_test(
@@ -63,9 +60,7 @@ fn exact_with_odds_ratios<'py>(
         "less" => Alternative::Less,
         "greater" => Alternative::Greater,
         "two-sided" => Alternative::TwoSided,
-        _ => panic!(
-            "Error: `alternative` should be one of ['two-sided', 'less', 'greater']"
-        ),
+        _ => panic!("Error: `alternative` should be one of ['two-sided', 'less', 'greater']"),
     };
 
     let return_value = exact_test_with_odds_ratio(
@@ -79,6 +74,7 @@ fn exact_with_odds_ratios<'py>(
     Ok(PyReadonlyArray2::from(return_value.to_pyarray(py)))
 }
 
+/// Perform fisher exact calculation on a given input array and return p-values
 fn exact_test(
     a: ArrayView1<u64>,
     b: ArrayView1<u64>,
@@ -86,18 +82,18 @@ fn exact_test(
     d: ArrayView1<u64>,
     alternative: Alternative,
 ) -> Array1<f64> {
-    /// Perform fisher exact calculation on a given input array
     /// Note, perhaps this should be a 2d array instead.
     let range = 0..a.dim();
 
     // todo, can we use a par_iter here?
-    let p_values= range
-        .into_iter()
-        .map(|index| fishers_exact(&[a[index], b[index], c[index], d[index]], alternative).expect("Statrs error with the given input."));
+    let p_values = range.into_iter().map(|index| {
+        fishers_exact(&[a[index], b[index], c[index], d[index]], alternative)
+            .expect("Statrs error with the given input.")
+    });
 
     Array1::from_iter(p_values)
 }
-
+/// Perform fisher exact calculation on a given input array and return odds ratios and p-values
 fn exact_test_with_odds_ratio(
     a: ArrayView1<u64>,
     b: ArrayView1<u64>,
@@ -105,44 +101,23 @@ fn exact_test_with_odds_ratio(
     d: ArrayView1<u64>,
     alternative: Alternative,
 ) -> Array2<f64> {
-    /// Perform fisher exact calculation on a given input array
-    /// Note, perhaps this should be a 2d array instead.
+    /// todo perhaps this should be a 2d array instead.
     let range = 0..a.dim();
 
-    let odds_p_values = range
-        .into_iter()
-        .map(|index| {
-            fishers_exact_with_odds_ratio(
-                &[a[index], b[index], c[index], d[index]],
-                alternative,
-            ).expect("Statrs error with the given input.")
-        });
-        //.collect();
+    // todo: investigate rayon par iter
+    let odds_p_values = range.into_iter().map(|index| {
+        fishers_exact_with_odds_ratio(&[a[index], b[index], c[index], d[index]], alternative)
+            .expect("Statrs error with the given input.")
+    });
 
-    //Convert into an array of odds_ratios and p_values
+    // Convert into an array of odds_ratios and p_values
+    // Todo: build directly using from iter and unzip
     let mut arr = Array2::<f64>::default((2, odds_p_values.len()));
-    //let x = Array2::<f64>::from_iter()
     for (index, (odds_ratio, p_value)) in odds_p_values.enumerate() {
         arr[[0, index]] = odds_ratio;
         arr[[1, index]] = p_value;
     }
-
     arr
-
-    // let arr2 = odds_p_values.iter().map(|x, y | ).collect::Array2::<f64>();
-    // arr
-    //
-    // let odds_p_values: Array2<f64> = range
-    //     .into_par_iter()
-    //     .map(|index| {
-    //         cached_fisher_exact_with_odds_ratios(
-    //             [a[index], b[index], c[index], d[index]],
-    //             alternative,
-    //         )
-    //     })
-    //     .collect();
-    //
-    // odds_p_values
 }
 
 #[cfg(test)]

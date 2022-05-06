@@ -1,6 +1,3 @@
-// Perform a Fisher exact test on a 2x2 contingency table.
-// Based on scipy's fisher test: https://github.com/scipy/scipy/blob/v1.7.0/scipy/stats/stats.py#L40757
-
 use statrs::distribution::{Discrete, DiscreteCDF, Hypergeometric};
 use statrs::StatsError;
 
@@ -13,6 +10,7 @@ pub enum Alternative {
 
 const EPSILON: f64 = 1.0 - 1e-4;
 
+/// Binary search in two-sided test with starting bound as argument
 fn binary_search(
     n: u64,
     n1: u64,
@@ -106,7 +104,21 @@ fn binary_search(
     guess
 }
 
-pub fn fishers_exact_with_odds_ratio(table: &[u64; 4], alternative: Alternative) -> Result<(f64, f64), StatsError> {
+/// Perform a Fisher exact test on a 2x2 contingency table.
+/// Based on scipy's fisher test: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.fisher_exact.html#scipy-stats-fisher-exact
+/// Returns the odds ratio and p_value
+/// # Examples
+///
+/// ```
+/// use statrs::statis_tests::fishers_exact;
+/// use statrs::statis_tests::Alternative;
+/// let table = [3, 5, 4, 50];
+/// let (odds_ratio, p_value) = fishers_exact_with_odds_ratio(&table, Alternative::Less).unwrap();
+/// ```
+pub fn fishers_exact_with_odds_ratio(
+    table: &[u64; 4],
+    alternative: Alternative,
+) -> Result<(f64, f64), StatsError> {
     // Calculate fisher's exact test with the odds ratio
     if (table[0] == 0 && table[2] == 0) || (table[1] == 0 && table[3] == 0) {
         // If both values in a row or column are zero, p-value is 1 and odds ratio is NaN.
@@ -125,6 +137,17 @@ pub fn fishers_exact_with_odds_ratio(table: &[u64; 4], alternative: Alternative)
     Ok((odds_ratio, p_value))
 }
 
+/// Perform a Fisher exact test on a 2x2 contingency table.
+/// Based on scipy's fisher test: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.fisher_exact.html#scipy-stats-fisher-exact
+/// Returns only the p_value
+/// # Examples
+///
+/// ```
+/// use statrs::statis_tests::fishers_exact;
+/// use statrs::statis_tests::Alternative;
+/// let table = [3, 5, 4, 50];
+/// let p_value = fishers_exact(&table, Alternative::Less).unwrap();
+/// ```
 pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> Result<f64, StatsError> {
     // Rewrite of the scipy's Fisher exact test
 
@@ -192,8 +215,10 @@ pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> Result<f64, 
 mod tests {
     use super::fishers_exact;
     use crate::fisher::Alternative;
+    use crate::fishers_exact_with_odds_ratio;
     use float_cmp::assert_approx_eq;
 
+    /// Test fishers_exact by comparing against values from scipy.
     #[test]
     fn test_fishers_exact() {
         let cases = [
@@ -326,5 +351,14 @@ mod tests {
                 assert_approx_eq!(f64, p_value, *expected, epsilon = 1e-12);
             }
         }
+    }
+
+    #[test]
+    fn test_fishers_exact_with_odds() {
+        let table = [3, 5, 4, 50];
+        let (odds_ratio, p_value) =
+            fishers_exact_with_odds_ratio(&table, Alternative::Less).unwrap();
+        assert_approx_eq!(f64, p_value, 0.9963034765672599, 1e-12);
+        assert_approx_eq!(f64, odds_ratio, 7.5, 1e-1);
     }
 }
