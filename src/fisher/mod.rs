@@ -1,7 +1,7 @@
 use statrs::distribution::{Discrete, DiscreteCDF, Hypergeometric};
 use statrs::StatsError;
 
-#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy)]
 pub enum Alternative {
     TwoSided,
     Less,
@@ -9,30 +9,18 @@ pub enum Alternative {
 }
 
 const EPSILON: f64 = 1.0 - 1e-4;
-
 /// Binary search in two-sided test with starting bound as argument
-fn binary_search(
-    n: u64,
-    n1: u64,
-    n2: u64,
-    mode: u64,
+fn binary_search<F>(
+    min_val: u64,
+    max_val: u64,
     p_exact: f64,
     epsilon: f64,
     upper: bool,
-) -> u64 {
-    // Binary search in two-sided test with starting bound as argument
-    let (mut min_val, mut max_val) = {
-        if upper {
-            (mode, n)
-        } else {
-            (0, mode)
-        }
-    };
+    func: F
+) -> u64 where
+    F: Fn(u64) -> f64 {
 
-    let population = n1 + n2;
-    let successes = n1;
-    let draws = n;
-    let dist = Hypergeometric::new(population, successes, draws).unwrap();
+    let (mut min_val, mut max_val) = (min_val, max_val);
 
     let mut guess = 0;
     loop {
@@ -55,9 +43,9 @@ fn binary_search(
             }
         };
 
-        let pmf_comp = dist.pmf(ng);
-        let p_guess = dist.pmf(guess);
-        if p_guess <= p_exact && p_exact < pmf_comp {
+        let pmf_comp = func(ng);
+        let p_guess = func(guess);
+        if p_guess <= p_exact && p_guess < pmf_comp {
             break;
         }
         if p_guess < p_exact {
@@ -71,34 +59,18 @@ fn binary_search(
         guess = min_val
     }
     if upper {
-        loop {
-            if guess > 0 && dist.pmf(guess) < p_exact * epsilon {
-                guess -= 1;
-            } else {
-                break;
-            }
+        while guess > 0 && func(guess) < p_exact * epsilon {
+            guess -= 1;
         }
-        loop {
-            if dist.pmf(guess) > p_exact / epsilon {
-                guess += 1;
-            } else {
-                break;
-            }
+        while func(guess) > p_exact / epsilon {
+            guess += 1;
         }
     } else {
-        loop {
-            if dist.pmf(guess) < p_exact * epsilon {
-                guess += 1;
-            } else {
-                break;
-            }
+        while func(guess) < p_exact * epsilon {
+            guess += 1;
         }
-        loop {
-            if guess > 0 && dist.pmf(guess) > p_exact / epsilon {
-                guess -= 1;
-            } else {
-                break;
-            }
+        while guess > 0 && func(guess) > p_exact / epsilon {
+            guess -= 1;
         }
     }
     guess
@@ -110,8 +82,7 @@ fn binary_search(
 /// # Examples
 ///
 /// ```
-/// use statrs::statis_tests::fishers_exact;
-/// use statrs::statis_tests::Alternative;
+/// use statrs::statis_tests::{Alternative, fishers_exact};
 /// let table = [3, 5, 4, 50];
 /// let (odds_ratio, p_value) = fishers_exact_with_odds_ratio(&table, Alternative::Less).unwrap();
 /// ```
@@ -119,17 +90,17 @@ pub fn fishers_exact_with_odds_ratio(
     table: &[u64; 4],
     alternative: Alternative,
 ) -> Result<(f64, f64), StatsError> {
-    // Calculate fisher's exact test with the odds ratio
     if (table[0] == 0 && table[2] == 0) || (table[1] == 0 && table[3] == 0) {
         // If both values in a row or column are zero, p-value is 1 and odds ratio is NaN.
         return Ok((f64::NAN, 1.0));
     }
 
     let odds_ratio = {
-        if table[1] > 0 && table[2] > 0 {
-            (table[0] * table[3]) as f64 / (table[1] * table[2]) as f64
-        } else {
+        if table[1] * table[2] == 0 {
+            // Prevent division by zero
             f64::INFINITY
+        } else {
+            (table[0] * table[3]) as f64 / (table[1] * table[2]) as f64
         }
     };
 
@@ -143,14 +114,11 @@ pub fn fishers_exact_with_odds_ratio(
 /// # Examples
 ///
 /// ```
-/// use statrs::statis_tests::fishers_exact;
-/// use statrs::statis_tests::Alternative;
+/// use statrs::statis_tests::{Alternative, fishers_exact};
 /// let table = [3, 5, 4, 50];
 /// let p_value = fishers_exact(&table, Alternative::Less).unwrap();
 /// ```
 pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> Result<f64, StatsError> {
-    // Rewrite of the scipy's Fisher exact test
-
     // If both values in a row or column are zero, the p-value is 1 and
     // the odds ratio is NaN.
     if (table[0] == 0 && table[2] == 0) || (table[1] == 0 && table[3] == 0) {
@@ -164,11 +132,11 @@ pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> Result<f64, 
     let p_value = {
         let population = n1 + n2;
         let successes = n1;
+        let draws = n;
+        let dist = Hypergeometric::new(population, successes, draws)?;
 
         match alternative {
             Alternative::Less => {
-                let draws = n;
-                let dist = Hypergeometric::new(population, successes, draws)?;
                 dist.cdf(table[0])
             }
             Alternative::Greater => {
@@ -177,9 +145,6 @@ pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> Result<f64, 
                 dist.cdf(table[1])
             }
             Alternative::TwoSided => {
-                let draws = n;
-                let dist = Hypergeometric::new(population, successes, draws)?;
-
                 let p_exact = dist.pmf(table[0]);
                 let mode = ((n + 1) * (n1 + 1)) / (n1 + n2 + 2) as u64; // todo: check floor?
                 let p_mode = dist.pmf(mode);
@@ -188,12 +153,13 @@ pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> Result<f64, 
                     return Ok(1.0);
                 }
 
+                let func = |x| dist.pmf(x);
                 if table[0] < mode {
                     let p_lower = dist.cdf(table[0]);
                     if dist.pmf(n) > p_exact / EPSILON {
                         return Ok(p_lower);
                     }
-                    let guess = binary_search(n, n1, n2, mode, p_exact, EPSILON, true);
+                    let guess = binary_search(mode, n, p_exact, EPSILON, true, func);
                     return Ok(p_lower + 1.0 - dist.cdf(guess - 1));
                 }
 
@@ -202,7 +168,7 @@ pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> Result<f64, 
                     return Ok(p_upper);
                 }
 
-                let guess = binary_search(n, n1, n2, mode, p_exact, EPSILON, false);
+                let guess = binary_search(0, mode, p_exact, EPSILON, false, func);
                 p_upper + dist.cdf(guess)
             }
         }
@@ -213,9 +179,7 @@ pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> Result<f64, 
 
 #[cfg(test)]
 mod tests {
-    use super::fishers_exact;
-    use crate::fisher::Alternative;
-    use crate::fishers_exact_with_odds_ratio;
+    use super::{fishers_exact, fishers_exact_with_odds_ratio, Alternative};
     use float_cmp::assert_approx_eq;
 
     /// Test fishers_exact by comparing against values from scipy.

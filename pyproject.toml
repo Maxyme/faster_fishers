@@ -1,8 +1,9 @@
 [tool.poetry]
 name = "faster-fisher"
-version = "0.1.0"
+version = "0.1.1"
 description = "Fast implementation of Fisher's exact test in Rust for Python."
-authors = ["Maxime Jacques <maxyme@outlook.com>"]
+authors = ["Maxime Jacques"]
+homepage = "https://github.com/Maxyme/faster_fishers"
 
 [tool.poetry.dependencies]
 numpy = ">=1.21"

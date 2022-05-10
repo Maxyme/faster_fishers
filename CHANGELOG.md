@@ -1,0 +1,3 @@
+# Faster-fishers changelog
+
+## [*.*.*] - [Ongoing]

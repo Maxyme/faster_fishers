@@ -1,6 +1,6 @@
 # faster_fishers
 Fast implementation of Fisher's exact test in Rust for Python.  
-Benchmarks show that this version is about 20x faster than scipy's version:
+Benchmarks show that this version is about 20x faster than scipy's version when running on a large range of inputs and about 10x faster when running on 1 input:
 
 ```asm
 --------------------------------------------------------------------------------------------- benchmark: 2 tests ---------------------------------------------------------------------------------------------
@@ -29,6 +29,8 @@ array([1.0, 0.03970749246529451])
 ### Building with cargo
 * Run `cargo build` in the main directory to build the project.
 
+### Publishing on pypi
+* `docker run -v ${PWD}:/io -it konstin2/maturin publish`
 
 ### Using locally
 * Install environment: `poetry install`  

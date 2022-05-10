@@ -110,7 +110,7 @@ fn exact_test_with_odds_ratio(
 
     // Convert into an array of odds_ratios and p_values
     // Todo: investigate building directly
-    let mut arr = Array2::<f64>::default((2, a.len()));
+    let mut arr = Array2::<f64>::default((2, a.dim()));
     for (index, (odds_ratio, p_value)) in odds_p_values.enumerate() {
         arr[[0, index]] = odds_ratio;
         arr[[1, index]] = p_value;
