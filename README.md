@@ -30,7 +30,7 @@ array([1.0, 0.03970749246529451])
 * Run `cargo build` in the main directory to build the project.
 
 ### Publishing on pypi
-* `docker run -v ${PWD}:/io -it konstin2/maturin publish`
+`docker run --rm -v $(pwd):/io ghcr.io/pyo3/maturin publish -u {USER} -p {PASSWORD}`
 
 ### Using locally
 * Install environment: `poetry install`  
