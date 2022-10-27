@@ -10,7 +10,7 @@ numpy = ">=1.21"
 python = ">=3.8,<3.11"
 
 [tool.poetry.dev-dependencies]
-pytest = ">=6.2"
+pytest = ">=7.2.0"
 pytest-benchmark = ">=3.4"
 scipy = ">=1.7"
 maturin = ">=0.12"
