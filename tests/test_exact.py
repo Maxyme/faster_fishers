@@ -4,6 +4,9 @@ import pytest
 from faster_fishers import exact, exact_with_odds_ratios
 from scipy import stats
 
+np.random.seed(42)
+values = np.random.randint(1000, size=(10000, 4)).astype(dtype=np.uint64)
+
 
 def test_exact():
     """Test the exact method with numpy arrays as input"""
@@ -26,21 +29,18 @@ def test_exact():
     np.testing.assert_array_almost_equal(odds_greaters[1], greaters)
 
 
-np.random.seed(42)
-values = np.random.randint(1000, size=(10000, 4)).astype(dtype=np.uint64)
-
-
 @pytest.mark.benchmark
 def test_benchmark_faster_fischer(benchmark):
-    """Benchmark faster fisher."""
+    """Benchmark faster fishers."""
     _ = benchmark(exact, values[:, 0], values[:, 1], values[:, 2], values[:, 3], "greater")
 
 
 @pytest.mark.benchmark
 def test_benchmark_scipy(benchmark):
-    """Benchmark scipy fisher."""
+    """Benchmark scipy fishers."""
+
     def scipy_p_values(a, b, c, d, alternative) -> float:
-        """Return scipy's fisher's exact test."""
+        """Return scipy's fishers's exact test."""
         odds_ratio, p_value = stats.fisher_exact([[a, b], [c, d]], alternative=alternative)
         return p_value
 

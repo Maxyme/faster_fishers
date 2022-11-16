@@ -1,6 +1,6 @@
 #![allow(unused_doc_comments)]
 
-mod fisher;
+mod fishers;
 
 use numpy::{PyReadonlyArray1, PyReadonlyArray2, ToPyArray};
 use pyo3::prelude::{pyfunction, pymodule, PyModule, PyResult, Python};
@@ -10,7 +10,7 @@ use pyo3::wrap_pyfunction;
 use ndarray::{Array1, Array2, ArrayView1};
 use rayon::prelude::*;
 
-use crate::fisher::{fishers_exact, fishers_exact_with_odds_ratio, Alternative};
+pub use fishers::{fishers_exact, fishers_exact_with_odds_ratio, Alternative};
 
 #[pymodule]
 fn faster_fishers(_py: Python, m: &PyModule) -> PyResult<()> {
@@ -75,7 +75,7 @@ fn exact_with_odds_ratios<'py>(
     Ok(PyReadonlyArray2::from(return_value.to_pyarray(py)))
 }
 
-/// Perform fisher exact calculation on a given input array and return p-values
+/// Perform fishers exact calculation on a given input array and return p-values
 fn exact_test(
     a: ArrayView1<u64>,
     b: ArrayView1<u64>,
@@ -85,14 +85,17 @@ fn exact_test(
 ) -> Array1<f64> {
     let range = 0..a.dim();
 
-    let p_values: Vec<f64> = range.into_par_iter().map(|index| {
-        fishers_exact(&[a[index], b[index], c[index], d[index]], alternative)
-            .expect("Statrs error with the given input.")
-    }).collect();
+    let p_values: Vec<f64> = range
+        .into_par_iter()
+        .map(|index| {
+            fishers_exact(&[a[index], b[index], c[index], d[index]], alternative)
+                .expect("Statrs error with the given input.")
+        })
+        .collect();
 
     Array1::from(p_values)
 }
-/// Perform fisher exact calculation on a given input array and return odds ratios and p-values
+/// Perform fishers exact calculation on a given input array and return odds ratios and p-values
 fn exact_test_with_odds_ratio(
     a: ArrayView1<u64>,
     b: ArrayView1<u64>,

@@ -5,21 +5,29 @@ authors = ["Maxime Jacques <maxyme@outlook.com>"]
 edition = "2021"
 license = "MIT"
 description = "Rust version of Scipy's Fisher exact test."
+homepage = "https://github.com/Maxyme/faster_fishers/"
+repository = "https://github.com/Maxyme/faster_fishers/"
+readme = "README.md"
+documentation = "https://github.com/Maxyme/faster_fishers/"
 
 [lib]
 name = "faster_fishers"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "lib"]
 
 [dependencies]
 numpy = "0.16.2"
-ndarray = "0.15.4"
+ndarray = "0.15.6"
 statrs = "0.15.0"
-rayon = "1.5.2"
+rayon = "1.5.3"
 
 [dev-dependencies]
 float-cmp = "0.9.0"
-criterion = "0.3.5"
+criterion = "0.3.6"
 
 [dependencies.pyo3]
-version = "0.16.4"
+version = "0.16.6"
 features = ["extension-module"]
+
+[[example]]
+name = "simple"
+path = "examples/simple.rs"
