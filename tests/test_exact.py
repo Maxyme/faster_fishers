@@ -32,7 +32,7 @@ def test_exact():
 @pytest.mark.benchmark
 def test_benchmark_faster_fischer(benchmark):
     """Benchmark faster fishers."""
-    _ = benchmark(exact, values[:, 0], values[:, 1], values[:, 2], values[:, 3], "greater")
+    _ = benchmark(exact_with_odds_ratios, values[:, 0], values[:, 1], values[:, 2], values[:, 3], "greater")
 
 
 @pytest.mark.benchmark

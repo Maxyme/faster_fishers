@@ -2,8 +2,8 @@
 
 mod fishers;
 
-use numpy::ndarray::{Array1, Array2};
-use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArrayDyn};
+use numpy::ndarray::{stack, Array1, Axis};
+use numpy::{array, IntoPyArray, PyArray1, PyArray2, PyReadonlyArrayDyn};
 use pyo3::{pymodule, types::PyModule, PyResult, Python};
 
 use rayon::prelude::*;
@@ -30,7 +30,7 @@ fn faster_fishers(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
             _ => panic!("Error: `alternative` should be one of ['two-sided', 'less', 'greater']"),
         };
 
-        // Todo: check if we can use the PyReadonlyArray directly
+        // Todo: check if we can index PyReadonlyArray directly
         let a = a.as_array();
         let b = b.as_array();
         let c = c.as_array();
@@ -76,23 +76,21 @@ fn faster_fishers(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
 
         let range = 0..a.len();
 
-        // todo: investigate rayon par iter
-        let odds_p_values = range.into_iter().map(|index| {
-            fishers_exact_with_odds_ratio(&[a[index], b[index], c[index], d[index]], alternative_enum)
-                .expect("Statrs error with the given input.")
-        });
+        let odds_p_values: Vec<Array1<f64>> = range
+            .into_par_iter()
+            .map(|index| {
+                let (odds_ratio, p_value) = fishers_exact_with_odds_ratio(
+                    &[a[index], b[index], c[index], d[index]],
+                    alternative_enum,
+                )
+                .expect("Statrs error with the given input.");
+                array![odds_ratio, p_value]
+            })
+            .collect();
 
         // Convert into an array of odds_ratios and p_values
-        // Todo: investigate building directly
-        let mut arr = Array2::<f64>::default((2, a.len()));
-        for (index, (odds_ratio, p_value)) in odds_p_values.enumerate() {
-            arr[[0, index]] = odds_ratio;
-            arr[[1, index]] = p_value;
-        }
-
-        arr.into_pyarray(py)
+        let array_2 = stack![Axis(1), odds_p_values[0], odds_p_values[1]];
+        array_2.into_pyarray(py)
     }
     Ok(())
 }
-
-
