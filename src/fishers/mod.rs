@@ -144,7 +144,7 @@ pub fn fishers_exact(table: &[u64; 4], alternative: Alternative) -> Result<f64, 
         }
         Alternative::TwoSided => {
             let p_exact = dist.pmf(table[0]);
-            let mode = ((n + 1) * (n1 + 1)) / (n1 + n2 + 2) as u64; // todo: check floor?
+            let mode = ((n + 1) * (n1 + 1)) / (n1 + n2 + 2);
             let p_mode = dist.pmf(mode);
 
             if (p_exact - p_mode).abs() / p_exact.max(p_mode) <= 1.0 - EPSILON {

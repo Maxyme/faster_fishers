@@ -21,6 +21,14 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "boto"
+version = "2.49.0"
+description = "Amazon Web Services Library"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -173,10 +181,29 @@ category = "dev"
 optional = false
 python-versions = ">=3.7"
 
+[[package]]
+name = "z3"
+version = "0.2.0"
+description = "Backup ZFS snapshots to S3"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+boto = "*"
+
+[[package]]
+name = "z3-solver"
+version = "4.11.2.0"
+description = "an efficient SMT solver library"
+category = "main"
+optional = false
+python-versions = "*"
+
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.12"
-content-hash = "99de969476e21f92009c393f4fdd04f944f0ed2447c2ac312aec477ef7b40ab4"
+content-hash = "8da02ae5e5ff892bf594c2c7d068c16c8efdce9b92f0f264495973f07b5cabe3"
 
 [metadata.files]
 attrs = [
@@ -186,6 +213,10 @@ attrs = [
 bitstring = [
     {file = "bitstring-4.0.1-py3-none-any.whl", hash = "sha256:4a27cdefd95eb535c4b79e0afcdb5532ba1dba0aaed98a31ad98f46b1e0d5bd9"},
     {file = "bitstring-4.0.1.tar.gz", hash = "sha256:7719f08f6df89ce28453a5e580d4a8ec1d1bda892dbb033466da0ccd9bdcb706"},
+]
+boto = [
+    {file = "boto-2.49.0-py2.py3-none-any.whl", hash = "sha256:147758d41ae7240dc989f0039f27da8ca0d53734be0eb869ef16e3adcfa462e8"},
+    {file = "boto-2.49.0.tar.gz", hash = "sha256:ea0d3b40a2d852767be77ca343b58a9e3a4b00d9db440efb8da74b4e58025e5a"},
 ]
 colorama = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
@@ -294,4 +325,15 @@ scipy = [
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
+]
+z3 = [
+    {file = "z3-0.2.0.tar.gz", hash = "sha256:34819e964d71e1474f933b34b9e65f0d021ccfc9d9edbbded54d54c1a9352b90"},
+]
+z3-solver = [
+    {file = "z3-solver-4.11.2.0.tar.gz", hash = "sha256:c7c7f10350db19eec831f9a45833268022c786e9ac0fbd9b2330956b377b9c39"},
+    {file = "z3_solver-4.11.2.0-py2.py3-none-macosx_10_16_x86_64.whl", hash = "sha256:90b34ffbd42ee9465ca047bfb99775c1000f6548f2b98bdeb7d52397347aa197"},
+    {file = "z3_solver-4.11.2.0-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:2cb81dcc220292dfcff6b5937f5faebeba4d0db7d2cc690f43e6f619bda40c47"},
+    {file = "z3_solver-4.11.2.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:9b5a11370df7ac27394fc660c812b2c9aac26f21fadf11e2c51a19cb707c1795"},
+    {file = "z3_solver-4.11.2.0-py2.py3-none-win32.whl", hash = "sha256:e4d3302c4046d65d0c8b5601d9b085f219b0fa78e312d08a5b24c86bb1629d05"},
+    {file = "z3_solver-4.11.2.0-py2.py3-none-win_amd64.whl", hash = "sha256:f763c6ad22a8455df46efa3755a75d5af5d40535a1e5ec5171c199cfda663e90"},
 ]
