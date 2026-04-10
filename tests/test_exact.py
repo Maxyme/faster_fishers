@@ -5,7 +5,7 @@ from faster_fishers import exact, exact_with_odds_ratios
 from scipy import stats
 
 np.random.seed(42)
-values = np.random.randint(1000, size=(10000, 4)).astype(dtype=np.uint64)
+values = np.random.randint(1000, size=(10_000, 4), dtype=np.uint64)
 
 
 def test_exact():
